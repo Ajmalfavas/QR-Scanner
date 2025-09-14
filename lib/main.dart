@@ -226,20 +226,19 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         ),
       );
 
-      // Send POST request to the Google Apps Script URL
-      final response = await http.post(
-        Uri.parse('https://script.google.com/macros/s/AKfycbwQOvtqtDNSBbpF8b-N0lUszWHe0K254Y0jvEd-XQk762-ruTiEXLu6UTA1c8ZRklxp/exec'),
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: jsonEncode({
-          'qr': qrData,
-        }),
-      );
+      // Send GET request to the Google Apps Script URL with query parameters
+      // This avoids CORS and 405 issues common with Google Apps Script
+      final uri = Uri.parse('https://script.google.com/macros/s/AKfycbwQOvtqtDNSBbpF8b-N0lUszWHe0K254Y0jvEd-XQk762-ruTiEXLu6UTA1c8ZRklxp/exec')
+          .replace(queryParameters: {
+        'qr': qrData,
+      });
+      
+      final response = await http.get(uri);
 
       // Hide loading dialog
       Navigator.of(context).pop();
 
+      // Google Apps Script often returns 200 even for successful operations
       if (response.statusCode == 200) {
         // Show success screen
         Navigator.pushReplacement(
@@ -249,11 +248,12 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
           ),
         );
       } else {
-        // Show error message
+        // Show error message with more details
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error sending data: ${response.statusCode}'),
+            content: Text('Error sending data: ${response.statusCode}\nResponse: ${response.body}'),
             backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
           ),
         );
       }
