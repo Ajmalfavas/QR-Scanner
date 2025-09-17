@@ -2,8 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:http/http.dart' as http;
 import 'package:image_picker/image_picker.dart';
-import 'dart:convert';
-import 'dart:io';
 
 void main() {
   runApp(const MyApp());
@@ -226,14 +224,15 @@ class _QRScannerScreenState extends State<QRScannerScreen> {
         ),
       );
 
-      // Send GET request to the Google Apps Script URL with query parameters
-      // This avoids CORS and 405 issues common with Google Apps Script
-      final uri = Uri.parse('https://script.google.com/macros/s/AKfycbwQOvtqtDNSBbpF8b-N0lUszWHe0K254Y0jvEd-XQk762-ruTiEXLu6UTA1c8ZRklxp/exec')
-          .replace(queryParameters: {
-        'qr': qrData,
-      });
-      
-      final response = await http.get(uri);
+      // Send POST request to the Google Apps Script URL with form body
+      final uri = Uri.parse('https://script.google.com/macros/s/AKfycbwQOvtqtDNSBbpF8b-N0lUszWHe0K254Y0jvEd-XQk762-ruTiEXLu6UTA1c8ZRklxp/exec');
+
+      final response = await http.post(
+        uri,
+        body: {
+          'qrData': qrData,
+        },
+      );
 
       // Hide loading dialog
       Navigator.of(context).pop();
